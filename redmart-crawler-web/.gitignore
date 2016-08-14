@@ -1,0 +1,12 @@
+*~
+.classpath
+.project
+target/*
+.settings/*
+*.class
+*.jar
+*.war
+logs/*
+metricslogs/*
+test-output/*
+/target/

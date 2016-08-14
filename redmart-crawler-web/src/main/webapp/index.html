@@ -1,0 +1,246 @@
+<html ng-app = "mainApp">
+
+   <head>
+      <title>Redmart Competitive Intelligence</title>
+      <script src = "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+      <script>
+        function toggleBrandTable() {
+            if(document.getElementById("brandTable").style.display=='none'){
+               document.getElementById("brandTable").style.display = 'table';
+            }else{
+               document.getElementById("brandTable").style.display = 'none';
+            }
+           }
+
+       function toggleRedmartButton(){
+           if(document.getElementById("redmartButton").style.display=='block'){
+              document.getElementById("redmartButton").disabled = 'disabled';
+           } 
+          }
+       function toggleCompetitorButton(){
+           if(document.getElementById("competitorButton").style.display=='block'){
+              document.getElementById("competitorButton").disabled = 'disabled';
+          }
+         }
+      </script>
+      <style>
+         table, th , td {
+            border: 1px solid grey;
+            border-collapse: collapse;
+            padding: 5px;
+         }
+         
+         table tr:nth-child(odd) {
+            background-color: #f2f2f2;
+         }
+         
+         table tr:nth-child(even) {
+            background-color: #ffffff;
+         }
+         div {
+    width: 400px;
+
+    position: absolute;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    margin: auto;
+}
+      </style>
+   </head>
+   
+   <body background="RedMart-Logo.jpg">
+      <div ng-controller = "FileUploadController"  style="align:right;position:relative;">
+        <table>
+          <tr>
+            <td><h2>Import redmart data<h2></td>
+            <td></td>
+         </tr>
+          <tr>
+          <td><input type = "file" file-model = "myRedmartFile"/></td>
+          <td><button id="redmartButton" style="display:block;" ng-click = "uploadRedmartFile()" onClick="toggleRedmartButton();">upload RedmartData</button></td>
+          </tr>
+           <tr>
+          <td><input type = "file" file-model = "myCompFile"/></td>
+          <td><button id="competitorButton" style="display:block;" ng-click = "uploadCompetitorFile()"  onClick="toggleCompetitorButton();">upload CompetitorData</button></td>
+          </tr>
+          </table>
+      </div>
+      <br/><br/>
+      <div  ng-controller = "RedmartController"  style="align:right;position:relative;">
+         <table style="align:left">
+         <th>
+         <td><h2>Redmart Competitive Intelligence<h2></td>
+         </th>
+         <tr>
+         <td><button ng-click = "totalOverpricedCount()">Total overpriced Count</button></td>
+         <td><p>Total over priced product Count is: {{overpricedJson}}</p></td>
+         </tr>
+         <tr>
+         <td><button ng-click = "totalUnderpricedCount()">Total underpriced Count</button></td>
+         <td><p>Total under priced product Count is: {{underpricedJson}}</p></td>
+         </tr>
+         <tr>
+         <td><button ng-click = "totalSamepricedCount()">Total optimalpriced Count</button></td>
+         <td><p>Total optimal priced product Count is: {{optimalpricedJson}}</p></td>
+         </tr>
+         <tr>
+         <td><button ng-click = "totalMatchedCount()">Total matched Count</button></td>
+         <td><p>Total matched product Count is: {{matchedcountJson}}</p></td>
+         </tr>
+         <tr>
+         <td><button ng-click = "totalUnmatchedCount()">Total unmatched Count</button></td>
+         <td><p>Total unmatched product Count is: {{unmatchedcountJson}}</p></td>
+         </tr>
+         <tr>
+         <td><p>Total product count</p></td>
+         <td><p>product type(redmart/competitor): <input type = "text" ng-model = "productType" /></p></td>
+         </tr>
+         <tr>
+         <td><button ng-click = "totalProductCount()">Submit</button></td>
+         <td><p>Total product count: {{productcountJson}}</p></td>
+         </tr>
+         </table>
+         <br/></br/>
+         <table  style="align:center;width:400px;">
+         <button ng-click = "totalBrandwisePrice()" onClick="toggleBrandTable();">Total brandwise price</button>
+         <table id ="brandTable" style="display:none;width:400px;">
+                     <tr>
+                        <th>Brands</th>.
+                        <th>Pricing Position</th>
+                     </tr>
+                     
+                     <tr ng-repeat = "brand in brandwisePriceJson">
+                        <td>{{ brand.brands }}</td>
+                        <td>{{ brand.pricingPosition }}</td>
+                     </tr>
+							
+          </table>
+          </table>
+      </div>
+      
+      <script>
+         var mainApp = angular.module("mainApp", []);
+
+
+         mainApp.directive('fileModel', ['$parse', function ($parse) {
+            return {
+               restrict: 'A',
+               link: function(scope, element, attrs) {
+                  var model = $parse(attrs.fileModel);
+                  var modelSetter = model.assign;
+                  
+                  element.bind('change', function(){
+                     scope.$apply(function(){
+                        modelSetter(scope, element[0].files[0]);
+                     });
+                  });
+               }
+            };
+         }]);
+      
+         mainApp.service('fileUpload', ['$http', function ($http) {
+            this.uploadFileToUrl = function(file, uploadUrl){
+               var fd = new FormData();
+               fd.append('file', file);
+            
+               $http.post(uploadUrl, fd, {
+                  transformRequest: angular.identity,
+                  headers: {'Content-Type': undefined}
+               })
+            
+               .success(function(){
+               })
+            
+               .error(function(){
+               });
+            }
+         }]);
+
+
+         mainApp.controller('FileUploadController', ['$scope', 'fileUpload', function($scope, fileUpload){
+            $scope.uploadRedmartFile = function(){
+               var file = $scope.myRedmartFile;
+               console.log('file is ' );
+               console.dir(file);
+               
+               var uploadUrl = "http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/_redmartFileupload";
+               fileUpload.uploadFileToUrl(file, uploadUrl);
+            };
+            $scope.uploadCompetitorFile = function(){
+               var file = $scope.myCompFile;
+               console.log('file is ' );
+               console.dir(file);
+               
+               var uploadUrl = "http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/_competitorFileupload";
+               fileUpload.uploadFileToUrl(file, uploadUrl);
+            };
+         }]);
+       
+         mainApp.controller('RedmartController', ['$scope', '$http', function RedmartController($scope, $http) {
+	    $scope.totalOverpricedCount = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalOverpricedCount').
+                success(function(data) {
+                    $scope.overpricedJson = data;
+                });
+		};
+            $scope.totalUnderpricedCount = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalUnderpricedCount').
+                success(function(data) {
+                    $scope.underpricedJson = data;
+                });
+		};
+            $scope.totalSamepricedCount = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalSamepricedCount').
+                success(function(data) {
+                    $scope.optimalpricedJson = data;
+                });
+		};
+            $scope.totalMatchedCount = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalMatchedCount').
+                success(function(data) {
+                    $scope.matchedcountJson = data;
+                });
+		};
+            $scope.totalUnmatchedCount = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalUnmatchedCount').
+                success(function(data) {
+                    $scope.unmatchedcountJson = data;
+                });
+		};
+            $scope.totalBrandwisePrice = function() {
+            $http.get('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalBrandwisePrice').
+                success(function(data) {
+                    $scope.brandwisePriceJson = data;
+                });
+		};
+            $scope.totalProductCount = function () {
+           // use $.param jQuery function to serialize data from JSON 
+            var data = {
+            }
+        
+            var config = {
+                headers : {
+                    'Content-Type': 'application/json; charset=UTF-8'
+                }
+            }
+
+            $http.post('http://ec2-52-66-113-169.ap-south-1.compute.amazonaws.com:8080/redmart-crawler-web/api/v1/product/totalCount?productType='+$scope.productType, data, config)
+            .success(function (data, status, headers, config) {
+                $scope.productcountJson = data;
+            })
+            .error(function (data, status, header, config) {
+                $scope.ResponseDetails = "Data: " + data +
+                    "<hr />status: " + status +
+                    "<hr />headers: " + header +
+                    "<hr />config: " + config;
+            });
+        };
+        }]);
+         
+      </script>
+      
+   </body>
+</html>
